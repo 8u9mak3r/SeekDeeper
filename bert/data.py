@@ -210,14 +210,15 @@ def _load_bookcorpus(tokenizer, loading_ratio, num_proc, splits):
         ).input_ids
         return example
 
-    # 10 files in total, but we may just use part of them
-    URLS = [
-        f"https://hf-mirror.com/datasets/bookcorpus/bookcorpus/resolve/refs%2Fconvert%2Fparquet/plain_text/train/000{i}.parquet?download=true"
-        for i in range(ceil(loading_ratio * 10))
-    ]
+    # # 10 files in total, but we may just use part of them
+    # URLS = [
+    #     f"https://hf-mirror.com/datasets/bookcorpus/bookcorpus/resolve/refs%2Fconvert%2Fparquet/plain_text/train/000{i}.parquet?download=true"
+    #     for i in range(ceil(loading_ratio * 10))
+    # ]
 
-    dl_manager = datasets.DownloadManager("bookcorpus")
-    paths = dl_manager.download(URLS)
+    # dl_manager = datasets.DownloadManager("bookcorpus")
+    # paths = dl_manager.download(URLS)
+    paths = "/home/dahaoming/.cache/huggingface/hub/datasets--hsila--bookcorpus-0.01/snapshots/a578c156bcdcad24f220cad8bd04367546720e38/default/train/0000.parquet"
     print("Downloaded at ", paths)
 
     # 74004228 rows in total, see https://huggingface.co/datasets/bookcorpus/bookcorpus

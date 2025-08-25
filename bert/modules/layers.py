@@ -55,6 +55,7 @@ class BertEmbeddings(nn.Module):
                 )
             )
         )
+
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings)
         return embeddings
@@ -104,7 +105,7 @@ class SelfAttention(nn.Module):
         else:
             att = torch.matmul(q, k.transpose(-1, -2)) / math.sqrt(nd)
             if mask is not None:
-                att = att.masked_fill(mask == 0, float("-inf"))
+                att = att + (1 - mask) * float(-1e10)
             att = F.softmax(att, dim=-1)
             att = self.dropout(att)
             att = torch.matmul(

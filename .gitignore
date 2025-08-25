@@ -4,3 +4,6 @@ checkpoints/
 !**/datasets/**/*.py
 !**/datasets/**/*.json
 .idea/
+
+.vscode
+*-hf/
