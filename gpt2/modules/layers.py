@@ -62,7 +62,8 @@ class Attention(nn.Module):
                 q,
                 k,
                 v,
-                attn_mask=casual_mask,
+                # attn_mask=casual_mask,
+                attn_mask=mask,
                 dropout_p=self.dropout if self.training else 0.0,
             )
         else:
