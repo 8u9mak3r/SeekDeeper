@@ -5,6 +5,7 @@ from modules.bert import BertForSequenceClassification
 from transformers import PreTrainedModel, PretrainedConfig
 from transformers import AutoConfig, AutoModelForMaskedLM, TorchAoConfig
 import torchao.quantization as aoq
+from torchao.dtypes import Int4CPULayout
 
 device = torch.device("cpu")
 
@@ -24,6 +25,7 @@ class MyBertConfig(PretrainedConfig):
                  num_attention_heads=12,
                  intermediate_size=3072,
                  max_len=512,
+                 dtype="f16",
                  **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
@@ -32,6 +34,7 @@ class MyBertConfig(PretrainedConfig):
         self.num_attention_heads = num_attention_heads
         self.intermediate_size = intermediate_size
         self.max_len = max_len
+        self.dtype  = dtype
 
 
 class MyBertForMaskedLM(PreTrainedModel):
@@ -40,13 +43,19 @@ class MyBertForMaskedLM(PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         # 这里你可以直接用你“手搓的”模型实现
+        dtype_dict = {
+            "f16": torch.float16,
+            "f32": torch.float32,
+        }
+        
         self.bert_clf = BertForSequenceClassification(
             vocab_size=config.vocab_size,
             hidden_size=config.hidden_size,
             max_len=config.max_len,
             num_hidden_layers=config.num_hidden_layers,
             num_attention_heads=config.num_attention_heads,
-            intermediate_size=config.intermediate_size
+            intermediate_size=config.intermediate_size,
+            dtype=dtype_dict[config.dtype]
         )
         # self.lm_head = nn.Linear(config.hidden_size, config.vocab_size)
 
@@ -70,17 +79,20 @@ AutoModelForMaskedLM.register(MyBertConfig, MyBertForMaskedLM)
 model = AutoModelForMaskedLM.from_pretrained("./mybert-hf")
 model = model.to(device).eval()
 
-
 from buddy.compiler.frontend import DynamoCompiler
 from buddy.compiler.graph import GraphDriver
 from buddy.compiler.graph.transform import simply_fuse, apply_classic_fusion
 from buddy.compiler.ops import tosa
 from torch._inductor.decomposition import decompositions as inductor_decomp
 
-quantizer = aoq.int8_weight_only()
-aoq.quantize_(model, quantizer)
-
+torch.set_printoptions(precision=4,sci_mode=False)
 x = torch.randn((1, 9, 768), dtype=torch.float16)
+
+encoder = model.bert_clf.encoder.layer[0]
+encoder = encoder.eval()
+# quantizer =aoq.int4_weight_only(group_size=128, layout=Int4CPULayout())
+quantizer =aoq.int8_weight_only()
+aoq.quantize_(encoder, quantizer)
 
 # Initialize Dynamo Compiler with specific configurations as an importer.
 dynamo_compiler = DynamoCompiler(
@@ -89,7 +101,7 @@ dynamo_compiler = DynamoCompiler(
 )
 
 with torch.no_grad():
-    graphs = dynamo_compiler.importer(model.bert_clf.encoder.layer[0], x)
+    graphs = dynamo_compiler.importer(encoder, x)
     
 assert len(graphs) == 1
 graph = graphs[0]

@@ -66,15 +66,15 @@ class SelfAttention(nn.Module):
     Standard self-attention operation, without any modifications
     """
 
-    def __init__(self, hidden_size, num_attention_heads, dropout):
+    def __init__(self, hidden_size, num_attention_heads, dropout, dtype):
         super().__init__()
         self.num_attention_heads = num_attention_heads
         self.attention_head_size = hidden_size // num_attention_heads
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
-        self.query = nn.Linear(hidden_size, self.all_head_size)
-        self.key = nn.Linear(hidden_size, self.all_head_size)
-        self.value = nn.Linear(hidden_size, self.all_head_size)
+        self.query = nn.Linear(hidden_size, self.all_head_size, dtype=dtype)
+        self.key = nn.Linear(hidden_size, self.all_head_size, dtype=dtype)
+        self.value = nn.Linear(hidden_size, self.all_head_size, dtype=dtype)
         self.dropout = nn.Dropout(dropout)
 
         # flash attention make GPU go brrrrr but support is only in PyTorch >= 2.0
@@ -126,6 +126,7 @@ class BertLayer(nn.Module):
         intermediate_size,
         num_attention_heads,
         dropout,
+        dtype,
     ):
         super().__init__()
         # I use a lot of `ModuleDict` here to simplify the code structure
@@ -136,10 +137,11 @@ class BertLayer(nn.Module):
                     hidden_size=hidden_size,
                     num_attention_heads=num_attention_heads,
                     dropout=dropout,
+                    dtype=dtype,
                 ),
                 output=nn.ModuleDict(
                     dict(
-                        dense=nn.Linear(hidden_size, hidden_size),
+                        dense=nn.Linear(hidden_size, hidden_size, dtype=dtype),
                         LayerNorm=nn.LayerNorm(hidden_size),
                     )
                 ),
@@ -147,12 +149,12 @@ class BertLayer(nn.Module):
         )
         self.output = nn.ModuleDict(
             dict(
-                dense=nn.Linear(intermediate_size, hidden_size),
+                dense=nn.Linear(intermediate_size, hidden_size, dtype=dtype),
                 LayerNorm=nn.LayerNorm(hidden_size),
             )
         )
         self.intermediate = nn.ModuleDict(
-            dict(dense=nn.Linear(hidden_size, intermediate_size))
+            dict(dense=nn.Linear(hidden_size, intermediate_size, dtype=dtype))
         )
         self.dropout = nn.Dropout(dropout)
 
@@ -180,6 +182,7 @@ class BertEncoder(nn.Module):
         intermediate_size,
         num_attention_heads,
         dropout,
+        dtype,
     ):
         super().__init__()
         self.layer = nn.ModuleList(
@@ -189,6 +192,7 @@ class BertEncoder(nn.Module):
                     intermediate_size=intermediate_size,
                     num_attention_heads=num_attention_heads,
                     dropout=dropout,
+                    dtype=dtype,
                 )
                 for _ in range(num_hidden_layers)
             ]

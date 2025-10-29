@@ -39,6 +39,7 @@ class BertModel(nn.Module):
         dropout=0.1,
         add_pooling_layer=True,
         pad_token_idx=None,
+        dtype=torch.float32,
     ):
 
         super().__init__()
@@ -59,10 +60,11 @@ class BertModel(nn.Module):
             intermediate_size=intermediate_size,
             num_attention_heads=num_attention_heads,
             dropout=dropout,
+            dtype=dtype
         )
 
         self.pooler = (
-            nn.ModuleDict(dict(dense=nn.Linear(hidden_size, hidden_size)))
+            nn.ModuleDict(dict(dense=nn.Linear(hidden_size, hidden_size, dtype=dtype)))
             if add_pooling_layer
             else None
         )
@@ -285,6 +287,7 @@ class BertForSequenceClassification(BertModel):
         dropout=0.1,
         pad_token_idx=None,
         num_classes=2,
+        dtype=torch.float32,
     ):
         # Initialize the parent BERT class with the given parameters
         super().__init__(
@@ -297,6 +300,7 @@ class BertForSequenceClassification(BertModel):
             intermediate_size=intermediate_size,
             dropout=dropout,
             pad_token_idx=pad_token_idx,
+            dtype=dtype,
         )
 
         self.dropout = nn.Dropout(dropout)
