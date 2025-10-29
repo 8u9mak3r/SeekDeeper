@@ -7,12 +7,12 @@ SCALEHLS_OPT := ${BUDDY_BUILD_DIR}/bin/scalehls-opt
 linalg-i8:
 	@${BUDDY_OPT} ./test.mlir \
 		-pass-pipeline \
-			"builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" -o ./bertlayer-i8.mlir
+			"builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" -o ./bertlayer-w8only.mlir
 
 linalg-i4:
 	@${BUDDY_OPT} ./subgraph0.mlir \
 		-pass-pipeline \
-			"builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" -o ./bertlayer-i4.mlir
+			"builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" -o ./bertlayer-w4only.mlir
 
 clear:
 	rm *.cpp hls.mlir subgraph0.mlir
