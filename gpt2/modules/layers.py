@@ -6,13 +6,13 @@ from torch.nn import functional as F
 
 
 class Attention(nn.Module):
-    def __init__(self, hidden_size, num_attention_heads, max_len, dropout):
+    def __init__(self, hidden_size, num_attention_heads, max_len, dropout, dtype):
         super().__init__()
         assert hidden_size % num_attention_heads == 0
         # key, query, value projections for all heads, but in a batch
-        self.c_attn = nn.Linear(hidden_size, 3 * hidden_size)
+        self.c_attn = nn.Linear(hidden_size, 3 * hidden_size, dtype=dtype)
         # output projection
-        self.c_proj = nn.Linear(hidden_size, hidden_size)
+        self.c_proj = nn.Linear(hidden_size, hidden_size, dtype=dtype)
         # regularization
         self.attn_dropout = nn.Dropout(dropout)
         self.resid_dropout = nn.Dropout(dropout)
@@ -35,7 +35,7 @@ class Attention(nn.Module):
         )  # batch size, sequence length, embedding dimensionality (hidden_size)
 
         # calculate query, key, values for all heads in batch and move head forward to be the batch dim
-        q, k, v = self.c_attn(x).split(self.hidden_size, dim=2)
+        q, k, v = self.c_attn(x).split(self.hidden_size, dim=-1)
         k = k.view(
             B, T, self.num_attention_heads, C // self.num_attention_heads
         ).transpose(
@@ -83,7 +83,7 @@ class Attention(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, hidden_size, num_attention_heads, max_len, dropout):
+    def __init__(self, hidden_size, num_attention_heads, max_len, dropout, dtype):
         super().__init__()
         self.ln_1 = nn.LayerNorm(hidden_size)
         self.attn = Attention(
@@ -91,13 +91,14 @@ class Block(nn.Module):
             num_attention_heads=num_attention_heads,
             max_len=max_len,
             dropout=dropout,
+            dtype=dtype,
         )
         self.ln_2 = nn.LayerNorm(hidden_size)
         self.mlp = nn.ModuleDict(
             dict(
-                c_fc=nn.Linear(hidden_size, 4 * hidden_size),
+                c_fc=nn.Linear(hidden_size, 4 * hidden_size, dtype=dtype),
                 act=nn.GELU(approximate="tanh"),
-                c_proj=nn.Linear(4 * hidden_size, hidden_size),
+                c_proj=nn.Linear(4 * hidden_size, hidden_size, dtype=dtype),
                 dropout=nn.Dropout(dropout),
             )
         )

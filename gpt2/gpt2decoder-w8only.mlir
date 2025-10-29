@@ -13,7 +13,7 @@
 #map12 = affine_map<(d0, d1, d2, d3) -> (d0, d1, d3, d2)>
 #map13 = affine_map<(d0, d1, d2) -> (d0, d1, 0)>
 module {
-  func.func @forward(%arg0: tensor<1x9x768xf16>, %arg1: tensor<1x9x768xf16>, %arg2: tensor<768xf32>, %arg3: tensor<768xf32>, %arg4: tensor<2304x768xi8>, %arg5: tensor<2304xf32>, %arg6: tensor<2304xf32>, %arg7: tensor<768x768xi8>, %arg8: tensor<768xf32>, %arg9: tensor<768xf32>, %arg10: tensor<1x9x768xf16>, %arg11: tensor<768xf32>, %arg12: tensor<768xf32>, %arg13: tensor<3072x768xi8>, %arg14: tensor<3072xf32>, %arg15: tensor<3072xf32>, %arg16: tensor<768x3072xi8>, %arg17: tensor<768xf32>, %arg18: tensor<768xf32>) -> tensor<1x9x768xf16> {
+  func.func @forward(%arg1: tensor<1x9x768xf16>, %arg2: tensor<768xf32>, %arg3: tensor<768xf32>, %arg4: tensor<2304x768xi8>, %arg5: tensor<2304xf32>, %arg6: tensor<2304xf32>, %arg7: tensor<768x768xi8>, %arg8: tensor<768xf32>, %arg9: tensor<768xf32>, %arg10: tensor<1x9x768xf16>, %arg11: tensor<768xf32>, %arg12: tensor<768xf32>, %arg13: tensor<3072x768xi8>, %arg14: tensor<3072xf32>, %arg15: tensor<3072xf32>, %arg16: tensor<768x3072xi8>, %arg17: tensor<768xf32>, %arg18: tensor<768xf32>) -> tensor<1x9x768xf16> {
     %0 = tensor.empty() : tensor<1x9x768xf32>
     %1 = linalg.generic {indexing_maps = [#map, #map1], iterator_types = ["parallel", "parallel", "parallel"]} ins(%arg10 : tensor<1x9x768xf16>) outs(%0 : tensor<1x9x768xf32>) {
     ^bb0(%in: f16, %out: f32):

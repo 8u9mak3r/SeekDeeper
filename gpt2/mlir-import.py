@@ -1,3 +1,4 @@
+import torch.nn as nn
 import torch
 
 import config
@@ -5,6 +6,7 @@ from modules.gpt2 import GPT2
 from transformers import PreTrainedModel, PretrainedConfig
 from transformers import AutoConfig, AutoModelForMaskedLM, TorchAoConfig
 import torchao.quantization as aoq
+from torchao.dtypes import Int4CPULayout
 
 device = torch.device("cpu")
 
@@ -23,6 +25,7 @@ class MyGPT2Config(PretrainedConfig):
                  num_attention_heads=12,
                  max_len=1024,
                  dropout=0.1,
+                 dtype="f16",
                  **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
@@ -31,6 +34,7 @@ class MyGPT2Config(PretrainedConfig):
         self.num_attention_heads = num_attention_heads
         self.max_len = max_len
         self.dropout = dropout
+        self.dtype = dtype
 
 
 class MyGPT2ForMaskedLM(PreTrainedModel):
@@ -39,13 +43,19 @@ class MyGPT2ForMaskedLM(PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         # 这里你可以直接用你“手搓的”模型实现
+        dtype_dict = {
+            "f16": torch.float16,
+            "f32": torch.float32,
+        }
+        
         self.gpt2 = GPT2(
             vocab_size=config.vocab_size,
             hidden_size=config.hidden_size,
             max_len=config.max_len,
             num_hidden_layers=config.num_hidden_layers,
             num_attention_heads=config.num_attention_heads,
-            dropout=config.dropout
+            dropout=config.dropout,
+            dtype=dtype_dict[config.dtype]
         )
         # self.lm_head = nn.Linear(config.hidden_size, config.vocab_size)
 
@@ -69,7 +79,7 @@ AutoModelForMaskedLM.register(MyGPT2Config, MyGPT2ForMaskedLM)
 # # 加载
 model = AutoModelForMaskedLM.from_pretrained("./mygpt2-hf")
 model = model.to(device).eval()
-print(model.gpt2.transformer.h[0])
+# print(model.gpt2.transformer.h[0].attn.c_attn.weight)
 
 from buddy.compiler.frontend import DynamoCompiler
 from buddy.compiler.graph import GraphDriver
@@ -77,8 +87,12 @@ from buddy.compiler.graph.transform import simply_fuse, apply_classic_fusion
 from buddy.compiler.ops import tosa
 from torch._inductor.decomposition import decompositions as inductor_decomp
 
+decoder = model.gpt2.transformer.h[0]
+decoder = decoder.eval()
 quantizer = aoq.int8_weight_only()
-aoq.quantize_(model, quantizer)
+# quantizer = aoq.int4_weight_only(group_size=128, layout=Int4CPULayout())
+aoq.quantize_(decoder, quantizer)
+# print(decoder)
 
 x = torch.randn((1, 9, 768), dtype=torch.float16)
 
@@ -89,7 +103,7 @@ dynamo_compiler = DynamoCompiler(
 )
 
 with torch.no_grad():
-    graphs = dynamo_compiler.importer(model.gpt2.transformer.h[0], x)
+    graphs = dynamo_compiler.importer(decoder, x)
     
 assert len(graphs) == 1
 graph = graphs[0]

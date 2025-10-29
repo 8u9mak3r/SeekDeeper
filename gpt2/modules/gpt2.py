@@ -19,6 +19,7 @@ class GPT2(nn.Module):
         num_attention_heads,
         num_hidden_layers,
         dropout,
+        dtype,
     ):
         super().__init__()
         self.max_len = max_len
@@ -34,6 +35,7 @@ class GPT2(nn.Module):
                             num_attention_heads=num_attention_heads,
                             max_len=max_len,
                             dropout=dropout,
+                            dtype=dtype,
                         )
                         for _ in range(num_hidden_layers)
                     ]
@@ -41,7 +43,7 @@ class GPT2(nn.Module):
                 ln_f=nn.LayerNorm(hidden_size),
             )
         )
-        self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
+        self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False, dtype=dtype)
 
         # self.transformer.wte.weight = (
         #     self.lm_head.weight
