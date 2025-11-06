@@ -1,4 +1,4 @@
-import torch
+import torch, sys, os
 
 import config
 from modules.bert import BertForSequenceClassification
@@ -90,8 +90,16 @@ x = torch.randn((1, 9, 768), dtype=torch.float16)
 
 encoder = model.bert_clf.encoder.layer[0]
 encoder = encoder.eval()
-# quantizer =aoq.int4_weight_only(group_size=128, layout=Int4CPULayout())
-quantizer =aoq.int8_weight_only()
+
+if len(sys.argv) == 2:
+    if sys.argv[1] == "--w4only": quantizer =aoq.int4_weight_only(group_size=128, layout=Int4CPULayout())
+    elif sys.argv[1] == "--w8a8": quantizer =aoq.int8_dynamic_activation_int8_weight()
+    elif sys.argv[1] == "--w8only": quantizer =aoq.int8_weight_only()
+    else: 
+        raise Exception(f"{sys.argv[1]} unsupported. Supported quantization strategies are: --w4only, --w8only and --w8a8")
+else:
+    raise Exception("No quantization strategy specified")
+
 aoq.quantize_(encoder, quantizer)
 
 # Initialize Dynamo Compiler with specific configurations as an importer.

@@ -13,14 +13,14 @@
 #map12 = affine_map<(d0, d1, d2) -> (0, 0, 0)>
 #map13 = affine_map<(d0, d1, d2) -> (0, d1, 0)>
 module {
-  func.func @forward(%arg0: tensor<768x768xi8>, %arg1: tensor<1x9x768xf16>, %arg2: tensor<768xf32>, %arg3: tensor<768xf32>, %arg4: tensor<768x768xi8>, %arg6: tensor<768xf32>, %arg7: tensor<768xf32>, %arg8: tensor<768x768xi8>, %arg10: tensor<768xf32>, %arg11: tensor<768xf32>, %arg12: tensor<768x768xi8>, %arg13: tensor<768xf32>, %arg14: tensor<768xf32>, %arg15: tensor<1x9x768xf16>, %arg16: tensor<768xf32>, %arg17: tensor<768xf32>, %arg18: tensor<3072x768xi8>, %arg19: tensor<3072xf32>, %arg20: tensor<3072xf32>, %arg21: tensor<768x3072xi8>, %arg22: tensor<768xf32>, %arg23: tensor<768xf32>, %arg24: tensor<768xf32>, %arg25: tensor<768xf32>) -> tensor<1x9x768xf16> {
+  func.func @forward(%arg0: tensor<768x768xi8>, %arg1: tensor<1x9x768xf16>, %arg2: tensor<768xf32>, %arg3: tensor<768xf32>, %arg4: tensor<768x768xi8>, %arg5: tensor<1x9x768xf16>, %arg6: tensor<768xf32>, %arg7: tensor<768xf32>, %arg8: tensor<768x768xi8>, %arg9: tensor<1x9x768xf16>, %arg10: tensor<768xf32>, %arg11: tensor<768xf32>, %arg12: tensor<768x768xi8>, %arg13: tensor<768xf32>, %arg14: tensor<768xf32>, %arg15: tensor<1x9x768xf16>, %arg16: tensor<768xf32>, %arg17: tensor<768xf32>, %arg18: tensor<3072x768xi8>, %arg19: tensor<3072xf32>, %arg20: tensor<3072xf32>, %arg21: tensor<768x3072xi8>, %arg22: tensor<768xf32>, %arg23: tensor<768xf32>, %arg24: tensor<768xf32>, %arg25: tensor<768xf32>) -> tensor<1x9x768xf16> {
     %cst = arith.constant dense<[1, 0]> : tensor<2xi32>
     %0 = tensor.empty() : tensor<768x768xi8>
     %1 = linalg.generic {indexing_maps = [#map, #map1], iterator_types = ["parallel", "parallel"]} ins(%arg0 : tensor<768x768xi8>) outs(%0 : tensor<768x768xi8>) {
     ^bb0(%in: i8, %out: i8):
       linalg.yield %in : i8
     } -> tensor<768x768xi8>
-    %collapsed = tensor.collapse_shape %arg15 [[0, 1], [2]] : tensor<1x9x768xf16> into tensor<9x768xf16>
+    %collapsed = tensor.collapse_shape %arg1 [[0, 1], [2]] : tensor<1x9x768xf16> into tensor<9x768xf16>
     %2 = tensor.empty() : tensor<768x768xf16>
     %3 = linalg.generic {indexing_maps = [#map1, #map1], iterator_types = ["parallel", "parallel"]} ins(%1 : tensor<768x768xi8>) outs(%2 : tensor<768x768xf16>) {
     ^bb0(%in: i8, %out: f16):
@@ -66,7 +66,7 @@ module {
     ^bb0(%in: i8, %out: i8):
       linalg.yield %in : i8
     } -> tensor<768x768xi8>
-    %collapsed_5 = tensor.collapse_shape %arg15 [[0, 1], [2]] : tensor<1x9x768xf16> into tensor<9x768xf16>
+    %collapsed_5 = tensor.collapse_shape %arg5 [[0, 1], [2]] : tensor<1x9x768xf16> into tensor<9x768xf16>
     %15 = tensor.empty() : tensor<768x768xf16>
     %16 = linalg.generic {indexing_maps = [#map1, #map1], iterator_types = ["parallel", "parallel"]} ins(%14 : tensor<768x768xi8>) outs(%15 : tensor<768x768xf16>) {
     ^bb0(%in: i8, %out: f16):
@@ -112,7 +112,7 @@ module {
     ^bb0(%in: i8, %out: i8):
       linalg.yield %in : i8
     } -> tensor<768x768xi8>
-    %collapsed_12 = tensor.collapse_shape %arg15 [[0, 1], [2]] : tensor<1x9x768xf16> into tensor<9x768xf16>
+    %collapsed_12 = tensor.collapse_shape %arg9 [[0, 1], [2]] : tensor<1x9x768xf16> into tensor<9x768xf16>
     %28 = tensor.empty() : tensor<768x768xf16>
     %29 = linalg.generic {indexing_maps = [#map1, #map1], iterator_types = ["parallel", "parallel"]} ins(%27 : tensor<768x768xi8>) outs(%28 : tensor<768x768xf16>) {
     ^bb0(%in: i8, %out: f16):
@@ -732,4 +732,3 @@ module {
     return %196 : tensor<1x9x768xf16>
   }
 }
-
