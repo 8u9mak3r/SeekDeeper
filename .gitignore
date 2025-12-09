@@ -5,6 +5,7 @@ checkpoints/
 !**/datasets/**/*.json
 .idea/
 
-debugpoint/
+debug*/
 .vscode
 *-hf/
+*.mlir
